@@ -12,19 +12,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-/**
- * Book Explorer
- * Console app that reads real pages from Books to Scrape (books.toscrape.com)
- * with JSoup and lets the user keep a small personal reading list.
- */
+
 public class App {
 
-    // ---------- Settings ----------
+   
     static final String BASE_URL = "https://books.toscrape.com/";
     static final int RESULT_SIZE = 25;   // books kept from the last explore/search
     static final int LIST_SIZE = 20;      // reading list capacity (fixed-size array)
 
-    // ---------- Data: plain arrays only, no ArrayList ----------
     static Book[] results = new Book[RESULT_SIZE];
     static int resultCount = 0;
 
@@ -33,11 +28,10 @@ public class App {
 
     static Scanner input = new Scanner(System.in);
 
-    // One book = title + price + rating + availability + link
     static class Book {
         String title;
         double price;
-        int rating;          // 1 to 5 stars (0 if unknown)
+        int rating;         
         String stock;
         String url;
 
@@ -50,9 +44,9 @@ public class App {
         }
     }
 
-    // ---------- Main menu ----------
+   
     public static void main(String[] args) {
-        // so the pound sign and accents print correctly
+
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
 
         int choice;
@@ -105,7 +99,6 @@ public class App {
         System.out.println("0. Exit");
     }
 
-    // ---------- 1. Explore ----------
     static void exploreBooks() {
         System.out.println("\nLoading books from Books to Scrape...");
         if (!scanCatalogue(null, -1)) {
@@ -118,8 +111,6 @@ public class App {
         showResults("Books");
     }
 
-    // ---------- 2 and 3. Search (overloaded) ----------
-    // Search by title
     static void searchBook(String title) {
         String word = title.trim();
         if (word.isEmpty()) {
@@ -133,7 +124,6 @@ public class App {
         }
     }
 
-    // Search by maximum price (same name, different parameter type)
     static void searchBook(double maxPrice) {
         System.out.println("\nSearching for books up to " + money(maxPrice) + " ...");
         if (scanCatalogue(null, maxPrice)) {
@@ -158,11 +148,7 @@ public class App {
         }
     }
 
-    // ---------- Scraping ----------
-    // The site has no search page, so we walk through the catalogue pages
-    // (20 books each) and keep the books that pass the filter.
-    // titleWord == null means "any title"; maxPrice < 0 means "any price".
-    // Stops as soon as RESULT_SIZE books are found. Returns false on a connection error.
+   
     static boolean scanCatalogue(String titleWord, double maxPrice) {
         resultCount = 0;
         String url = BASE_URL;
@@ -188,7 +174,6 @@ public class App {
         return true;
     }
 
-    // Reads one catalogue page: every book is <article class="product_pod">
     static void collectBooks(Document doc, String titleWord, double maxPrice) {
         Elements pods = doc.select("article.product_pod");
 
@@ -205,7 +190,7 @@ public class App {
                 continue;
             }
 
-            String title = link.attr("title").trim();      // the link text is shortened with "..."
+            String title = link.attr("title").trim();      
             if (title.isEmpty()) {
                 title = link.text().trim();
             }
@@ -227,7 +212,7 @@ public class App {
         }
     }
 
-    // "£51.77" -> 51.77 (returns -1 if the text has no number)
+   
     static double parsePrice(String text) {
         String digits = text.replaceAll("[^0-9.]", "");
         try {
@@ -237,7 +222,7 @@ public class App {
         }
     }
 
-    // class="star-rating Three" -> 3
+   
     static int ratingToNumber(String className) {
         String[] parts = className.trim().split("\\s+");
         switch (parts[parts.length - 1]) {
@@ -256,7 +241,7 @@ public class App {
         }
     }
 
-    // ---------- 4. Add ----------
+   
     static void addBook() {
         if (resultCount == 0) {
             System.out.println("\nNo books to choose from yet. Use Explore or Search first.");
@@ -286,7 +271,7 @@ public class App {
         System.out.println("Added: " + book.title);
     }
 
-    // ---------- 5. View ----------
+   
     static void viewReadingList() {
         if (listCount == 0) {
             System.out.println("\nYour reading list is empty.");
@@ -300,7 +285,7 @@ public class App {
         }
     }
 
-    // ---------- 6. Remove ----------
+   
     static void removeBook() {
         if (listCount == 0) {
             System.out.println("\nYour reading list is empty, nothing to remove.");
@@ -314,7 +299,7 @@ public class App {
         }
 
         String removed = readingList[index].title;
-        for (int i = index; i < listCount - 1; i++) {   // shift the rest one place left
+        for (int i = index; i < listCount - 1; i++) {  
             readingList[i] = readingList[i + 1];
         }
         readingList[listCount - 1] = null;
@@ -322,7 +307,7 @@ public class App {
         System.out.println("Removed: " + removed);
     }
 
-    // ---------- 7. Details ----------
+    
     static void displayBookDetails() {
         System.out.println("\nWhich list do you want to pick from?");
         System.out.println("1. Last explore/search results");
@@ -367,7 +352,6 @@ public class App {
         System.out.println("URL         : " + book.url);
     }
 
-    // ---------- Helpers ----------
     static Document fetchPage(String url) throws IOException {
         return Jsoup.connect(url)
                 .userAgent("Mozilla/5.0")
@@ -389,17 +373,14 @@ public class App {
         }
     }
 
-    // "£51.77 | 3/5 stars | In stock"
     static String summary(Book book) {
         return money(book.price) + " | " + book.rating + "/5 stars | " + book.stock;
     }
 
-    // \u00a3 is the pound sign
     static String money(double amount) {
         return "\u00a3" + String.format(Locale.US, "%.2f", amount);
     }
 
-    // true if every word of the keyword appears in the text (ignores case and accents)
     static boolean containsAllWords(String text, String keyword) {
         String plainText = plain(text);
         String[] words = plain(keyword).split("\\s+");
@@ -416,7 +397,6 @@ public class App {
         return noAccents.toLowerCase();
     }
 
-    // Reads a whole number; returns -1 if the user typed something else
     static int readNumber(String prompt) {
         System.out.print(prompt);
         String line = input.nextLine().trim();
@@ -427,7 +407,6 @@ public class App {
         }
     }
 
-    // Reads a price like 20 or 12.50; returns -1 if the user typed something else
     static double readPrice(String prompt) {
         System.out.print(prompt);
         String line = input.nextLine().trim().replace(',', '.');
@@ -437,8 +416,6 @@ public class App {
         return Double.parseDouble(line);
     }
 
-    // Asks for a number from 1 to count. Returns the array index (0-based),
-    // or -1 if the user cancelled (0) or typed something invalid.
     static int pickNumber(int count, String prompt) {
         int n = readNumber(prompt);
         if (n == 0) {
